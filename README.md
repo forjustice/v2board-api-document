@@ -1,6 +1,6 @@
 # V2Board 最全接口文档
 
-> 感谢 v2board 提供的开源项目！ 完整api请查阅开源项目 : [v2board](https://github.com/wyx2685/v2board)
+> 感谢 v2board 提供的开源项目！ 完整api请查阅开源项目 : [xiaoV2board](https://github.com/wyx2685/v2board)
 
 **所有的GET 请求 均需要传入请求头 Authorization 值为 auth_data**
 
@@ -72,6 +72,52 @@
 | /user/ticket/close | POST | [关闭工单](#4关闭工单) |
 
 ___
+
+### Knowledge（使用教程/文档）
+
+| URL                                  | 请求  | 描述                         |
+|--------------------------------------|-----|----------------------------|
+| /guest/knowledge/categories          | GET | [分类列表](#1分类列表)      |
+| /guest/knowledge/articles            | GET | [文档列表](#2文档列表)      |
+| /guest/knowledge/article/{id}        | GET | [文档详情](#3文档详情)      |
+| /user/knowledge/categories           | GET | [分类列表](#1分类列表)      |
+| /user/knowledge/articles             | GET | [文档列表](#2文档列表)      |
+| /user/knowledge/article/{id}         | GET | [文档详情](#3文档详情)      |
+
+### Node（节点/状态）
+
+| URL                            | 请求 | 描述                                |
+|--------------------------------|-----|-------------------------------------|
+| /client/subscribe?token=...    | GET | [客户端订阅/节点下发](#1节点列表)     |
+
+### Wallet（我的钱包）
+
+| URL             | 请求 | 描述                           |
+|-----------------|-----|------------------------------|
+| /user/info      | GET | [余额/账户信息](#1余额账户信息) |
+| /user/wallet/fetch | GET | [钱包明细](#2钱包明细)        |
+
+### Recharge（余额充值）
+
+| URL                               | 请求  | 描述                      |
+|-----------------------------------|-----|-------------------------|
+| /user/order/getPaymentMethod      | GET | [获取支付方式](#1获取支付方式) |
+| /user/recharge/save               | POST| [创建充值订单](#2创建充值订单) |
+| /user/recharge/checkout           | POST| [结算充值订单](#3结算充值订单) |
+| /user/recharge/fetch              | GET | [充值记录/状态](#4查询充值记录状态) |
+
+### GiftCard（礼品卡）
+
+| URL                    | 请求  | 描述                 |
+|------------------------|-----|--------------------|
+| /user/giftcard/redeem  | POST| [兑换余额](#1兑换余额) |
+| /user/giftcard/check   | GET | [校验卡密](#2校验卡密) |
+
+### Traffic（流量明细）
+
+| URL                   | 请求  | 描述                 |
+|-----------------------|-----|--------------------|
+| /user/traffic/fetch   | GET | [明细列表](#1明细列表) |
 
 ## Passport
 
