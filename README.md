@@ -24,7 +24,7 @@
 | /user/logout          | GET  | [登出](#1登出)        |
 | /user/info            | GET  | [账号信息](#2账号信息)    |
 | /user/getSubscribe    | GET  | [订阅信息](#3订阅信息)    |
-| /user/resetSecurity   | GET  | [重置订阅链接](#重置订阅链接) |
+| /user/resetSecurity   | GET  | [重置订阅链接](#4重置订阅链接) |
 | /user/getStat         | GET  | [代办事项](#5代办事项)    |
 | /user/changePassword  | POST | [修改密码](#6修改密码)    |
 | /user/update          | POST | [通知状态](#7通知状态)    |
@@ -1207,3 +1207,193 @@ ___
 | data   | boolean | 返回成功 |
 
 ---
+
+## Knowledge（使用教程/文档）
+> 以 **wyx2685/v2board** 分支为基准补充的知识库模块。该模块用于给前台展示“使用教程/公告以外的文档”。某些部署会将其作为公开接口（guest），也有部署使用用户态（user）。请以 `routes/api.php` 实际路由为准。
+
+### 1. 分类列表
+`GET` `/guest/knowledge/categories`  或  `GET` `/user/knowledge/categories`
+
+**响应**（示例）
+```json
+{
+  "data": [
+    {"id": 1, "name": "入门", "sort": 1},
+    {"id": 2, "name": "进阶", "sort": 2}
+  ]
+}
+```
+
+### 2. 文档列表
+`GET` `/guest/knowledge/articles?category_id={id}&page={n}&per_page={m}`  
+或 `GET` `/user/knowledge/articles?category_id={id}&page={n}&per_page={m}`
+
+**响应**（示例）
+```json
+{
+  "data": [
+    {"id": 101, "title": "如何订阅", "summary": "…", "created_at": 1710000000, "updated_at": 1710003600}
+  ],
+  "total": 1
+}
+```
+
+### 3. 文档详情
+`GET` `/guest/knowledge/article/{id}` 或 `GET` `/user/knowledge/article/{id}`
+
+**响应**（示例）
+```json
+{
+  "data": {
+    "id": 101,
+    "title": "如何订阅",
+    "content": "<h1>…</h1>",
+    "created_at": 1710000000,
+    "updated_at": 1710003600
+  }
+}
+```
+
+---
+
+## Node（节点/状态）
+> 节点列表/状态接口。不同后端（如 V2bX/XrayR）和不同主题对字段有所扩展。
+
+### 1. 节点列表
+`GET` `/user/servers`
+
+**响应**（示例，仅展示常见字段）
+```json
+{
+  "data": [
+    {
+      "id": 9,
+      "name": "香港IEPL 01",
+      "group_id": 1,
+      "rate": 1.0,
+      "sort": 10,
+      "type": "vless",
+      "host": "hk01.example.com",
+      "port": 443,
+      "server_type": "grpc",
+      "tls": 1,
+      "allow_insecure": 0,
+      "tags": ["HK", "IEPL"],
+      "country_code": "HK",
+      "latency": 32,        // 可选：部分部署会返回延迟（ms）
+      "online": true        // 可选：部分部署会返回在线状态
+    }
+  ],
+  "total": 1
+}
+```
+
+### 2. 订阅信息（含剩余/重置时间戳等）
+`GET` `/user/getSubscribe`
+
+**响应**：见「User」章节中订阅相关接口。
+
+---
+
+## Wallet（我的钱包）
+> 余额&明细。余额字段也会在 `/user/info` 中返回。
+
+### 1. 余额/账户信息
+`GET` `/user/info`  
+**关键字段**：`balance`（余额，number），`commission_balance`（可用佣金，number），`transfer_enable`（套餐可用流量）等。
+
+### 2. 钱包明细
+`GET` `/user/wallet/fetch?page={n}&per_page={m}`
+
+**响应**（示例）
+```json
+{
+  "data": [
+    {"id": 1, "amount": -9.9, "type": "order", "trade_no": "202401010001", "created_at": 1704067200, "remark": "购买月付"}
+  ],
+  "total": 1
+}
+```
+
+---
+
+## Recharge（余额充值）
+> **wyx 分支已支持余额充值**，走订单/支付通道。典型流程：创建充值单 → 结算（调起支付网关） → 回调 → 余额入账。
+
+### 1. 获取支付方式
+`GET` `/user/order/getPaymentMethod`
+
+### 2. 创建充值订单
+`POST` `/user/recharge/save`  **或**  `POST` `/user/wallet/recharge/save`  
+**请求体**
+```json
+{ "amount": 50 }
+```
+**响应**
+```json
+{ "data": "R202410010001" }   // 充值订单号（trade_no）
+```
+
+### 3. 结算充值订单
+`POST` `/user/recharge/checkout`  **或**  `POST` `/user/wallet/recharge/checkout`  
+**请求体**
+```json
+{ "trade_no": "R202410010001", "method": 10 }
+```
+**响应**
+```json
+{ "type": 0, "data": "payurl-or-qrcode" }  // 同订单结算：type=0 二维码, 1 URL
+```
+
+### 4. 查询充值记录/状态
+`GET` `/user/recharge/fetch`  **或**  `GET` `/user/wallet/recharge/fetch`  
+`GET` `/user/order/check?trade_no={trade_no}`  // 统一订单状态：0待支付 1开通中 2已取消 3已完成 4已折抵
+
+---
+
+## GiftCard（礼品卡）
+> 支持卡密充值（将卡密面额 **兑入余额** 或 **直接开通对应套餐**。后者通常由卡密服务/插件实现）。常见实现：面板内置卡密、或使用外部发卡插件（如 *v2board-card*）。
+
+### 1. 兑换余额
+`POST` `/user/giftcard/redeem`  
+**请求体**
+```json
+{ "code": "ABCD-1234-EFGH-5678" }
+```
+**成功响应**
+```json
+{ "data": { "amount": 50, "balance": 120.5 } }
+```
+
+### 2. 校验卡密
+`GET` `/user/giftcard/check?code={code}`
+
+> 若使用外部发卡服务（如 `cnmars/v2board-card`），前端一般走 `/api/v1/card/*` 独立接口，最终写入面板数据库并可直接登录使用。此时**不经过**上面的兑换接口，请以插件文档为准。
+
+---
+
+## Traffic（流量明细）
+> 拉取用户近段时间内的流量使用明细。
+
+### 1. 明细列表
+`GET` `/user/traffic/fetch?start={unix}&end={unix}&page={n}&per_page={m}`
+
+**响应**（示例）
+```json
+{
+  "data": [
+    {
+      "id": 1001,
+      "server_id": 9,
+      "u": 1234567,
+      "d": 8901234,
+      "total": 101,           // MB（示例，具体单位以后端为准）
+      "created_at": 1710000000
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
